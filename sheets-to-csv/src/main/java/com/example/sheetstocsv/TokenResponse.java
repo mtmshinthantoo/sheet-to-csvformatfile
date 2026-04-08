@@ -23,4 +23,5 @@ public class TokenResponse {
     public long getExpiresIn() {
         return expiresIn;
     }
+
 }

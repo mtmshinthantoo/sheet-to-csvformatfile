@@ -32,17 +32,14 @@ public class RefreshTokenService {
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
-
         HttpClient client = HttpClient.newHttpClient();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
-            throw new RuntimeException("Failed to refresh access token. Http " + response.statusCode() + ": " + response.body());
+            throw new RuntimeException("Failed to refresh access token. HTTP " + response.statusCode() + ": " + response.body());
         }
-
         ObjectMapper mapper = new ObjectMapper();
         JsonNode json = mapper.readTree(response.body());
-
         return json.get("access_token").asText();
     }
 }

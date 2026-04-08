@@ -53,7 +53,6 @@ public class Main {
 
         } catch (Exception e) {
             System.err.println("Application failed:");
-            e.printStackTrace();
         }
     }
 }

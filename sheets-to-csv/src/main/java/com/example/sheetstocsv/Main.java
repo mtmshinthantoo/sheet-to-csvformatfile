@@ -1,40 +1,59 @@
 package com.example.sheetstocsv;
 
+import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.Properties;
 
 public class Main {
 
-    private static final String CLIENT_ID = "${google.client.id}";
-    private static final String CLIENT_SECRET = "${google.client.secret}";
-    private static final String REFRESH_TOKEN = "${google.refresh.token}";
-
     public static void main(String[] args) {
         System.out.println("Starting Sheets to CSV converter...");
+
         try {
-            // Refresh access token
+            // Load application.properties
+            Properties props = new Properties();
+            try (InputStream input = Main.class
+                    .getClassLoader()
+                    .getResourceAsStream("application.properties")) {
+
+                if (input == null) {
+                    throw new RuntimeException("application.properties not found");
+                }
+                props.load(input);
+            }
+
+            // Read configuration values
+            String clientId = props.getProperty("google.client.id");
+            String clientSecret = props.getProperty("google.client.secret");
+            String refreshToken = props.getProperty("google.refresh.token");
+            String sheetId = props.getProperty("google.sheet.id");
+
+            // 1. Refresh access token
             RefreshTokenService refreshTokenService
-                    = new RefreshTokenService(CLIENT_ID, CLIENT_SECRET);
+                    = new RefreshTokenService(clientId, clientSecret);
 
             String accessToken
-                    = refreshTokenService.refreshAccessToken(REFRESH_TOKEN);
+                    = refreshTokenService.refreshAccessToken(refreshToken);
 
             System.out.println("Access token obtained successfully.");
 
-            // Call Google Sheets API
-            GoogleSheetService sheetService = new GoogleSheetService();
-            String sheetJson = sheetService.fetchSheetData(accessToken);
+            // 2. Fetch Google Sheets data
+            GoogleSheetService sheetService
+                    = new GoogleSheetService(sheetId);
 
-            System.out.println("Sheet data received successfully.");
-            System.out.println(sheetJson);
-            // Write CSV file
+            String sheetJson
+                    = sheetService.fetchSheetData(accessToken);
+
+            // 3. Write CSV
             CsvWriterService csvWriterService = new CsvWriterService();
-            csvWriterService.writeCsv(sheetJson, Paths.get("Employees.csv"));
+            csvWriterService.writeCsv(sheetJson, Paths.get("Titles.csv"));
 
             System.out.println("CSV file created successfully.");
             System.out.println("Process completed.");
 
         } catch (Exception e) {
             System.err.println("Application failed:");
+            e.printStackTrace();
         }
     }
 }

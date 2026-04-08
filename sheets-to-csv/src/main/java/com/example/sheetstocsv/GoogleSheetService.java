@@ -9,12 +9,21 @@ import java.nio.charset.StandardCharsets;
 
 public class GoogleSheetService {
 
-    private static final String SHEET_ID = "${google.sheet.id}";
-    private static final String RANGE = "Employees!A1:F";
+    private final String sheetId;
+    private static final String RANGE = "Title!A1:G";
+
+    public GoogleSheetService(String sheetId) {
+        this.sheetId = sheetId;
+    }
 
     public String fetchSheetData(String accessToken) throws Exception {
-        String encodeRange = URLEncoder.encode(RANGE, StandardCharsets.UTF_8);
-        String url = "https://sheets.googleapis.com/v4/spreadsheets/" + SHEET_ID + "/values/" + encodeRange;
+
+        String encodedRange = URLEncoder.encode(RANGE, StandardCharsets.UTF_8);
+        String url
+                = "https://sheets.googleapis.com/v4/spreadsheets/"
+                + sheetId
+                + "/values/"
+                + encodedRange;
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -23,11 +32,18 @@ public class GoogleSheetService {
                 .GET()
                 .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response
+                = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
-            throw new RuntimeException("Failed to fetch sheet data. HTTP " + response.statusCode() + ": " + response.body());
+            throw new RuntimeException(
+                    "Failed to fetch sheet data. HTTP "
+                    + response.statusCode()
+                    + ": "
+                    + response.body()
+            );
         }
+
         return response.body();
     }
 }

@@ -1,0 +1,16 @@
+# Maven
+target/
+
+# IDE
+.vscode/
+.idea/
+
+# Secrets
+**/application.properties
+.env
+*.secret
+*.key
+
+# OS
+.DS_Store
+Thumbs.db

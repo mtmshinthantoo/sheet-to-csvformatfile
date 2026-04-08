@@ -1,0 +1,7 @@
+google.client.id=YOUR_GOOGLE_CLIENT_ID
+google.client.secret=YOUR_GOOGLE_CLIENT_SECRET
+google.sheet.id=YOUR_GOOGLE_SHEET_ID
+google.refresh.token=YOUR_REFRESH_TOKEN
+google.sheet.id=YOUR_SHEET_ID
+redirect.uri=http://localhost:8080/callback
+

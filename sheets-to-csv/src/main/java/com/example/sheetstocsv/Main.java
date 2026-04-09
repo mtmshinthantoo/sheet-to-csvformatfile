@@ -1,5 +1,7 @@
 package com.example.sheetstocsv;
 
+import java.awt.Desktop;
+import java.net.URI;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -8,10 +10,21 @@ public class Main {
 
     private static String generateCsvFileName(String sheetName) {
         String newSheetName = sheetName.replaceAll("[^a-zA-Z0-9_-]", "_");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmm");
         String timestamp = LocalDateTime.now().format(formatter);
         return newSheetName + "_" + timestamp + ".csv";
     }
+
+    private static String buildOAuthUrl(String clientId, String redirectUri) {
+        return "https://accounts.google.com/o/oauth2/v2/auth"
+                + "?client_id=" + clientId
+                + "&redirect_uri=" + redirectUri
+                + "&response_type=code"
+                + "&scope=https://www.googleapis.com/auth/spreadsheets.readonly"
+                + "&access_type=offline"
+                + "&prompt=consent";
+    }
+    // https://accounts.google.com/o/oauth2/v2/auth?client_id=62338090647-63aujn6nca8aqd25oegji5qkl0rgesar.apps.googleusercontent.com&redirect_uri=http://localhost:8080/callback&response_type=code&scope=https://www.googleapis.com/auth/spreadsheets.readonly&access_type=offline&prompt=consent
 
     public static void main(String[] args) {
         System.out.println("Starting Sheets to CSV converter...");
@@ -32,7 +45,29 @@ public class Main {
             if (!config.hasValue("google.refresh.token")) {
                 System.out.println("No refresh token found. Running OAuth flow...");
 
-                String authorizationCode = config.get("authorization.code");
+                // Start local callback server
+                LocalOAuthCallbackServer callbackServer = new LocalOAuthCallbackServer(8080);
+                callbackServer.start();
+
+                // Open browser for user authorization
+                String oautUrl = buildOAuthUrl(clientId, redirectUri);
+                System.out.println("Opening brower for Google authorization......");
+
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().browse(URI.create(oautUrl));
+                } else {
+                    System.out.println("Please open the following URL in your browser to authorize the application:");
+                    System.out.println(oautUrl);
+                }
+                // Wait for authorization code
+                String authorizationCode = callbackServer.waitForAuthorizationCode();
+                // Stop the callback server
+                callbackServer.stop();
+
+                if (authorizationCode == null || authorizationCode.isBlank()) {
+                    throw new RuntimeException("Failed to obtain authorization code.");
+                }
+                // Exchange authorization code for tokens
                 OAuthService oauthService = new OAuthService(clientId, clientSecret, redirectUri);
 
                 TokenResponse tokens = oauthService.runAuthorization(authorizationCode);

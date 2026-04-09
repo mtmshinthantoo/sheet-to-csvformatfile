@@ -10,15 +10,16 @@ import java.nio.charset.StandardCharsets;
 public class GoogleSheetService {
 
     private final String sheetId;
-    private static final String RANGE = "Title!A1:G";
+    private final String range;
 
-    public GoogleSheetService(String sheetId) {
+    public GoogleSheetService(String sheetId, String range) {
         this.sheetId = sheetId;
+        this.range = range;
     }
 
     public String fetchSheetData(String accessToken) throws Exception {
 
-        String encodedRange = URLEncoder.encode(RANGE, StandardCharsets.UTF_8);
+        String encodedRange = URLEncoder.encode(range, StandardCharsets.UTF_8);
         String url
                 = "https://sheets.googleapis.com/v4/spreadsheets/"
                 + sheetId

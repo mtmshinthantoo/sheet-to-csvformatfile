@@ -5,6 +5,8 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Scanner;
 
 public class Main {
 
@@ -85,23 +87,61 @@ public class Main {
             String accessToken = refreshService.refreshAccessToken(refreshToken);
             System.out.println("Access token obtained successfully.");
 
+            // Select sheet name
+            GoogleSheetService sheetService = new GoogleSheetService(sheetId, "");
+            String chosenSheetName;
+
+            if (sheetName != null && !sheetName.isBlank()) {
+                chosenSheetName = sheetName;
+                System.out.println("Using sheet name from configuration: " + chosenSheetName);
+            } else {
+                List<String> availableSheets = sheetService.listSheetNames(accessToken);
+
+                if (availableSheets.isEmpty()) {
+                    throw new RuntimeException("No sheets found in the spreadsheet.");
+                }
+
+                System.out.println("Available sheets: ");
+                for (int i = 0; i < availableSheets.size(); i++) {
+                    System.out.println((i + 1) + ". " + availableSheets.get(i));
+                }
+
+                Scanner scanner = new Scanner(System.in);
+                int selection;
+
+                while (true) {
+                    System.out.println("Please select sheet number to export: ");
+                    if (scanner.hasNextInt()) {
+                        selection = scanner.nextInt();
+                        if (selection >= 1 && selection <= availableSheets.size()) {
+                            break;
+                        }
+                    } else {
+                        scanner.next(); // Consume invalid input
+                    }
+                    System.out.println("Invalid selection. Please enter a number between 1 and " + availableSheets.size());
+                }
+                chosenSheetName = availableSheets.get(selection - 1);
+                System.out.println("Selected sheet: " + chosenSheetName);
+            }
+
             // Determine effective range
             String chosenRange;
             if (sheetRange == null || sheetRange.isBlank()) {
-                chosenRange = sheetName;
+                chosenRange = chosenSheetName;
             } else if (sheetRange.contains("!")) {
                 chosenRange = sheetRange;
             } else {
-                chosenRange = sheetName + "!" + sheetRange;
+                chosenRange = chosenSheetName + "!" + sheetRange;
             }
 
             //Fetch sheet data
-            GoogleSheetService sheetService = new GoogleSheetService(sheetId, chosenRange);
-            String sheetJson = sheetService.fetchSheetData(accessToken);
+            GoogleSheetService dataService = new GoogleSheetService(sheetId, chosenRange);
+            String sheetJson = dataService.fetchSheetData(accessToken);
 
             //Convert to CSV
             CsvWriterService csvWriter = new CsvWriterService();
-            String outputFileName = generateCsvFileName(sheetName);
+            String outputFileName = generateCsvFileName(chosenSheetName);
             csvWriter.writeCsv(sheetJson, Paths.get(outputFileName));
 
             System.out.println("Sheet data successfully written to " + outputFileName);

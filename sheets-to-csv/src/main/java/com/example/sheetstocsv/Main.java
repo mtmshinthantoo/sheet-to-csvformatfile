@@ -12,7 +12,7 @@ public class Main {
 
     private static String generateCsvFileName(String sheetName) {
         String newSheetName = sheetName.replaceAll("[^a-zA-Z0-9_-]", "_");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmm");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
         String timestamp = LocalDateTime.now().format(formatter);
         return newSheetName + "_" + timestamp + ".csv";
     }

@@ -2,6 +2,8 @@ package com.example.sheetstocsv;
 
 import java.awt.Desktop;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -142,7 +144,11 @@ public class Main {
             //Convert to CSV
             CsvWriterService csvWriter = new CsvWriterService();
             String outputFileName = generateCsvFileName(chosenSheetName);
-            csvWriter.writeCsv(sheetJson, Paths.get(outputFileName));
+
+            Path exportDir = Paths.get("Exported_CSV");
+            Files.createDirectories(exportDir);
+            Path outputPath = exportDir.resolve(outputFileName);
+            csvWriter.writeCsv(sheetJson, outputPath);
 
             System.out.println("Sheet data successfully written to " + outputFileName);
             System.out.println("Application completed successfully.");

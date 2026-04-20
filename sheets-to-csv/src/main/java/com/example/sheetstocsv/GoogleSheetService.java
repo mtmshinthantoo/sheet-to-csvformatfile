@@ -7,7 +7,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +34,7 @@ public class GoogleSheetService {
                 + encodedRange;
 
         HttpClient client = HttpClient.newHttpClient();
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Authorization", "Bearer " + accessToken)
@@ -53,9 +56,10 @@ public class GoogleSheetService {
         return response.body();
     }
 
-    // Method to show all sheet names in the spreadsheet
     public List<String> listSheetNames(String accessToken) throws Exception {
-        String url = "https://sheets.googleapis.com/v4/spreadsheets/"
+
+        String url
+                = "https://sheets.googleapis.com/v4/spreadsheets/"
                 + sheetId
                 + "?fields=sheets.properties.title";
 
@@ -67,7 +71,8 @@ public class GoogleSheetService {
                 .GET()
                 .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response
+                = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             throw new RuntimeException(
@@ -78,7 +83,6 @@ public class GoogleSheetService {
             );
         }
 
-        // Parse the response to extract sheet names
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
         JsonNode sheetsNode = root.get("sheets");
@@ -93,6 +97,51 @@ public class GoogleSheetService {
                 }
             }
         }
+
         return sheetNames;
+    }
+
+    public void appendValues(
+            String accessToken,
+            String targetSheetName,
+            List<List<String>> values
+    ) throws Exception {
+
+        String encodedRange
+                = URLEncoder.encode(targetSheetName + "!A1", StandardCharsets.UTF_8);
+
+        String url
+                = "https://sheets.googleapis.com/v4/spreadsheets/"
+                + sheetId
+                + "/values/"
+                + encodedRange
+                + ":append?valueInputOption=RAW";
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("values", values);
+
+        ObjectMapper mapper = new ObjectMapper();
+        String requestBody = mapper.writeValueAsString(body);
+
+        HttpClient client = HttpClient.newHttpClient();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response
+                = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException(
+                    "Failed to append values. HTTP "
+                    + response.statusCode()
+                    + ": "
+                    + response.body()
+            );
+        }
     }
 }

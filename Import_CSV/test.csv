@@ -1,0 +1,21 @@
+experiment_id,model_name,algorithm,dataset_used,epochs,batch_size,learning_rate,optimizer,loss_function,accuracy,precision,recall,f1_score,training_time_min,gpu_used,framework,overfitting_flag,hyperparam_tuning,experiment_date,researcher
+EXP-001,ResNet50,CNN,ImageNet,50,32,0.001,Adam,CrossEntropy,0.89,0.88,0.87,0.88,120,NVIDIA A100,PyTorch,No,Yes,3/1/2026,Min
+EXP-002,BERT,NLP,WikiText,10,16,0.0001,AdamW,CrossEntropy,0.92,0.91,0.9,0.91,200,NVIDIA V100,TensorFlow,No,Yes,3/2/2026,Tun
+EXP-003,YOLOv8,Object Detection,COCO,80,16,0.001,SGD,IoU,0.85,0.83,0.82,0.83,180,NVIDIA A100,PyTorch,Yes,Yes,3/3/2026,Hla
+EXP-004,Transformer,Seq2Seq,Translation,30,64,0.0005,Adam,CrossEntropy,0.88,0.87,0.86,0.87,220,NVIDIA V100,PyTorch,No,Yes,3/4/2026,Kyaw
+EXP-005,GAN,Generative,Custom,100,32,0.0002,Adam,BCE,0.75,0.7,0.72,0.71,300,NVIDIA A100,TensorFlow,Yes,No,3/5/2026,Aung
+EXP-006,MobileNet,CNN,CIFAR-10,40,64,0.001,SGD,CrossEntropy,0.87,0.86,0.85,0.86,90,NVIDIA T4,PyTorch,No,Yes,3/6/2026,Su
+EXP-007,LSTM,RNN,Text8,25,32,0.0007,RMSprop,CrossEntropy,0.83,0.82,0.8,0.81,150,NVIDIA V100,TensorFlow,Yes,Yes,3/7/2026,Mg
+EXP-008,EfficientNet,CNN,ImageNet,60,32,0.001,Adam,CrossEntropy,0.91,0.9,0.89,0.9,140,NVIDIA A100,PyTorch,No,Yes,3/8/2026,Ko
+EXP-009,XLNet,NLP,BooksCorpus,15,16,0.0001,AdamW,CrossEntropy,0.93,0.92,0.91,0.92,210,NVIDIA V100,TensorFlow,No,Yes,3/9/2026,Mya
+EXP-010,DeepLab,Segmentation,Cityscapes,70,8,0.0003,SGD,IoU,0.86,0.85,0.84,0.85,260,NVIDIA A100,PyTorch,Yes,No,3/10/2026,Nyein
+EXP-011,ResNet101,CNN,ImageNet,55,32,0.001,Adam,CrossEntropy,0.9,0.89,0.88,0.89,130,NVIDIA A100,PyTorch,No,Yes,3/11/2026,Min
+EXP-012,BERT,NLP,SQuAD,12,16,0.0001,AdamW,CrossEntropy,0.94,0.93,0.92,0.93,190,NVIDIA V100,TensorFlow,No,Yes,3/12/2026,Tun
+EXP-013,YOLOv7,Object Detection,COCO,75,16,0.001,SGD,IoU,0.84,0.82,0.81,0.82,170,NVIDIA A100,PyTorch,Yes,Yes,3/13/2026,Hla
+EXP-014,Transformer,Seq2Seq,Translation,35,64,0.0005,Adam,CrossEntropy,0.89,0.88,0.87,0.88,210,NVIDIA V100,PyTorch,No,Yes,3/14/2026,Kyaw
+EXP-015,GAN,Generative,Custom,110,32,0.0002,Adam,BCE,0.76,0.71,0.73,0.72,310,NVIDIA A100,TensorFlow,Yes,No,3/15/2026,Aung
+EXP-016,MobileNet,CNN,CIFAR-10,45,64,0.001,SGD,CrossEntropy,0.88,0.87,0.86,0.87,95,NVIDIA T4,PyTorch,No,Yes,3/16/2026,Su
+EXP-017,LSTM,RNN,Text8,28,32,0.0007,RMSprop,CrossEntropy,0.84,0.83,0.81,0.82,155,NVIDIA V100,TensorFlow,Yes,Yes,3/17/2026,Mg
+EXP-018,EfficientNet,CNN,ImageNet,65,32,0.001,Adam,CrossEntropy,0.92,0.91,0.9,0.91,150,NVIDIA A100,PyTorch,No,Yes,3/18/2026,Ko
+EXP-019,XLNet,NLP,BooksCorpus,18,16,0.0001,AdamW,CrossEntropy,0.94,0.93,0.92,0.93,220,NVIDIA V100,TensorFlow,No,Yes,3/19/2026,Mya
+EXP-020,DeepLab,Segmentation,Cityscapes,75,8,0.0003,SGD,IoU,0.87,0.86,0.85,0.86,270,NVIDIA A100,PyTorch,Yes,No,3/20/2026,Nyein

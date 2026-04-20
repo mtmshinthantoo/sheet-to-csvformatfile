@@ -24,7 +24,7 @@ public class Main {
                 + "?client_id=" + clientId
                 + "&redirect_uri=" + redirectUri
                 + "&response_type=code"
-                + "&scope=https://www.googleapis.com/auth/spreadsheets.readonly"
+                + "&scope=https://www.googleapis.com/auth/spreadsheets"
                 + "&access_type=offline"
                 + "&prompt=consent";
     }

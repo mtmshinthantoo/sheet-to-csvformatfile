@@ -17,3 +17,6 @@ Thumbs.db
 
 #exported CSV files
 Exported_CSV/
+
+#imported CSV files
+Import_CSV/

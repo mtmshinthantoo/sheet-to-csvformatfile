@@ -12,6 +12,9 @@ import java.util.Scanner;
 
 public class Main {
 
+    // ================== GLOBAL SHEET ID ==================
+    private static String SHEET_ID;
+
     // ------------------ Utility Methods ------------------
     private static String generateCsvFileName(String sheetName) {
         String safeSheetName = sheetName.replaceAll("[^a-zA-Z0-9_-]", "_");
@@ -31,9 +34,7 @@ public class Main {
                 + "&prompt=consent";
     }
 
-    /**
-     * Extract spreadsheetId from a Google Sheets URL.
-     */
+    // ------------------ SHEET URL HANDLING ------------------
     private static String extractSheetIdFromUrl(String url) {
         String marker = "/spreadsheets/d/";
         int start = url.indexOf(marker);
@@ -48,24 +49,20 @@ public class Main {
         return url.substring(start, end);
     }
 
-    /**
-     * Ask user for Google Sheets URL until a valid one is provided.
-     */
-    private static String askForSheetId(Scanner scanner) {
+    private static void askForSheetUrlOnce(Scanner scanner) {
         while (true) {
             System.out.print("Enter Google Sheets URL: ");
             String url = scanner.nextLine().trim();
             String sheetId = extractSheetIdFromUrl(url);
             if (sheetId != null && !sheetId.isBlank()) {
-                return sheetId;
+                SHEET_ID = sheetId;
+                return;
             }
             System.out.println("Invalid Google Sheets URL. Please try again.");
         }
     }
 
-    /**
-     * Ensure OAuth and return access token.
-     */
+    // ------------------ OAUTH ------------------
     private static String ensureAccessToken() throws Exception {
 
         ConfigLoader config = new ConfigLoader();
@@ -113,10 +110,13 @@ public class Main {
         return refreshService.refreshAccessToken(refreshToken);
     }
 
-    // ------------------ Main Entry ------------------
+    // ------------------ MAIN ------------------
     public static void main(String[] args) {
 
         Scanner scanner = new Scanner(System.in);
+
+        // ASK ONCE AT STARTUP
+        askForSheetUrlOnce(scanner);
 
         while (true) {
             System.out.println("\n========= MAIN MENU =========");
@@ -135,7 +135,7 @@ public class Main {
                     runImportMenu(scanner);
                     break;
                 case "0":
-                    System.out.println("Exiting application. Goodbye!");
+                    System.out.println("Exiting application.");
                     return;
                 default:
                     System.out.println("Invalid option.");
@@ -161,7 +161,6 @@ public class Main {
                 case "2":
                     try {
                         String accessToken = ensureAccessToken();
-                        String sheetId = askForSheetId(scanner);
 
                         System.out.print("Enter CSV file path: ");
                         Path csvPath = Paths.get(scanner.nextLine().trim());
@@ -172,7 +171,7 @@ public class Main {
                         }
 
                         GoogleSheetService sheetService
-                                = new GoogleSheetService(sheetId, "");
+                                = new GoogleSheetService(SHEET_ID, "");
 
                         List<String> sheets
                                 = sheetService.listSheetNames(accessToken);
@@ -246,10 +245,9 @@ public class Main {
 
         try {
             String accessToken = ensureAccessToken();
-            String sheetId = askForSheetId(scanner);
 
             GoogleSheetService service
-                    = new GoogleSheetService(sheetId, "");
+                    = new GoogleSheetService(SHEET_ID, "");
 
             List<String> sheets
                     = service.listSheetNames(accessToken);
@@ -281,7 +279,7 @@ public class Main {
             String chosenSheet = sheets.get(selection - 1);
 
             GoogleSheetService dataService
-                    = new GoogleSheetService(sheetId, chosenSheet);
+                    = new GoogleSheetService(SHEET_ID, chosenSheet);
 
             String json
                     = dataService.fetchSheetData(accessToken);

@@ -1,0 +1,3 @@
+vehicle_id,model,series,body_type,year,engine_type,engine_capacity,horsepower,torque,transmission,fuel_type,drivetrain,color,mileage_km,price_usd,status,manufacturing_country,dealer_location,vin,registration_date,warranty_years,owner_count
+BMW-028,M3 G80,3 Series,Sedan,2022,Turbocharged,2.0L,184,300,Automatic,Petrol,RWD,Grey,15000,32000,Available,Germany,Yangon,WBA001,2022-03-01,3,1
+BMW-002,,4 Series,Sedan,,Turbocharged,2.0L,255,400,Automatic,Petrol,RWD,Black,,,Available,Germany,Mandalay,,,,

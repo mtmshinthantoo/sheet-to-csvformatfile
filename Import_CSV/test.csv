@@ -1,21 +1,5 @@
-match_id,game_title,tournament_name,team_a,team_b,winner,mvp_player,kills_team_a,kills_team_b,match_duration_minutes,map_played,rounds_played,spectators,prize_pool_usd,region,match_date,stream_platform,viewership_peak,
-M-001,Valorant,Champions Tour,DRX,Fnatic,Fnatic,Derke,45,52,38,Bind,24,500000,1000000,Asia,3/1/2026,Twitch,850000,
-M-002,CS2,Major League,NAVI,G2,NAVI,s1mple,60,55,42,Mirage,30,600000,1500000,EU,3/2/2026,YouTube,920000,
-M-003,Dota2,The International,OG,PSG.LGD,OG,Topson,70,65,55,Ancient,40,800000,2000000,Global,3/3/2026,Twitch,1200000,
-M-004,LoL,Worlds,T1,JDG,T1,Faker,30,28,35,Summoner Rift,25,1000000,2500000,KR,3/4/2026,Twitch,2000000,
-M-005,Valorant,Champions Tour,PRX,LOUD,LOUD,aspas,50,54,40,Haven,26,450000,1000000,Asia,3/5/2026,YouTube,780000,
-M-006,CS2,Major League,Faze,Vitality,Vitality,ZywOo,58,62,41,Inferno,29,550000,1500000,EU,3/6/2026,Twitch,870000,
-M-007,Dota2,The International,Secret,EG,EG,RTZ,65,68,50,Ancient,38,750000,2000000,Global,3/7/2026,Twitch,1100000,
-M-008,LoL,Worlds,GenG,EDG,GenG,Chovy,28,25,33,Summoner Rift,22,900000,2500000,KR,3/8/2026,YouTube,1800000,
-M-009,Valorant,Masters,SEN,NRG,SEN,TenZ,48,46,39,Ascent,25,400000,900000,NA,3/9/2026,Twitch,760000,
-M-010,CS2,Major League,Heroic,ENCE,Heroic,cadiaN,57,52,44,Nuke,31,520000,1500000,EU,3/10/2026,Twitch,830000,
-M-011,Valorant,Champions Tour,DRX,PRX,DRX,Buzz,49,47,37,Split,23,480000,1000000,Asia,3/11/2026,Twitch,790000,
-M-012,CS2,Major League,NAVI,Faze,NAVI,b1t,61,59,43,Overpass,30,610000,1500000,EU,3/12/2026,YouTube,910000,
-M-013,Dota2,The International,OG,Secret,OG,Topson,72,66,56,Ancient,41,820000,2000000,Global,3/13/2026,Twitch,1250000,
-M-014,LoL,Worlds,T1,GenG,T1,Faker,32,29,36,Summoner Rift,26,1050000,2500000,KR,3/14/2026,Twitch,2100000,
-M-015,Valorant,Masters,LOUD,SEN,LOUD,Less,51,49,41,Fracture,27,420000,900000,NA,3/15/2026,YouTube,770000,
-M-016,CS2,Major League,G2,Vitality,Vitality,ZywOo,59,63,42,Dust2,30,570000,1500000,EU,3/16/2026,Twitch,880000,
-M-017,Dota2,The International,EG,PSG.LGD,PSG.LGD,Ame,68,70,53,Ancient,39,780000,2000000,Global,3/17/2026,Twitch,1150000,
-M-018,LoL,Worlds,EDG,JDG,JDG,Knight,29,31,34,Summoner Rift,24,950000,2500000,CN,3/18/2026,YouTube,1750000,
-M-019,Valorant,Champions Tour,NRG,PRX,PRX,f0rsaken,46,50,38,Icebox,24,460000,1000000,Asia,3/19/2026,Twitch,800000,
-M-020,CS2,Major League,Heroic,NAVI,NAVI,s1mple,55,60,45,Vertigo,32,600000,1500000,EU,3/20/2026,Twitch,900000,
+vehicle_id,model,color
+BMW-001,M3 G80,Grey
+BMW-002,M4,Grey
+BMW-003,M5,Grey
+BMW-025,M3 G80,Grey

@@ -32,7 +32,39 @@ public class Main {
     }
 
     /**
-     * Ensures OAuth is completed and returns a valid access token.
+     * Extract spreadsheetId from a Google Sheets URL.
+     */
+    private static String extractSheetIdFromUrl(String url) {
+        String marker = "/spreadsheets/d/";
+        int start = url.indexOf(marker);
+        if (start == -1) {
+            return null;
+        }
+        start += marker.length();
+        int end = url.indexOf("/", start);
+        if (end == -1) {
+            return null;
+        }
+        return url.substring(start, end);
+    }
+
+    /**
+     * Ask user for Google Sheets URL until a valid one is provided.
+     */
+    private static String askForSheetId(Scanner scanner) {
+        while (true) {
+            System.out.print("Enter Google Sheets URL: ");
+            String url = scanner.nextLine().trim();
+            String sheetId = extractSheetIdFromUrl(url);
+            if (sheetId != null && !sheetId.isBlank()) {
+                return sheetId;
+            }
+            System.out.println("Invalid Google Sheets URL. Please try again.");
+        }
+    }
+
+    /**
+     * Ensure OAuth and return access token.
      */
     private static String ensureAccessToken() throws Exception {
 
@@ -128,9 +160,8 @@ public class Main {
                 case "1":
                 case "2":
                     try {
-                        ConfigLoader config = new ConfigLoader();
-                        String sheetId = config.get("google.sheet.id");
                         String accessToken = ensureAccessToken();
+                        String sheetId = askForSheetId(scanner);
 
                         System.out.print("Enter CSV file path: ");
                         Path csvPath = Paths.get(scanner.nextLine().trim());
@@ -208,17 +239,14 @@ public class Main {
         }
     }
 
-    // ------------------ EXPORT FLOW (UNCHANGED) ------------------
+    // ------------------ EXPORT FLOW ------------------
     private static void runExportFlow(Scanner scanner) {
 
         System.out.println("\n--- Export Google Sheets -> CSV ---");
 
         try {
-            ConfigLoader config = new ConfigLoader();
-            String sheetId = config.get("google.sheet.id");
-            String sheetRange = config.get("google.sheet.range");
-
             String accessToken = ensureAccessToken();
+            String sheetId = askForSheetId(scanner);
 
             GoogleSheetService service
                     = new GoogleSheetService(sheetId, "");
@@ -252,13 +280,8 @@ public class Main {
 
             String chosenSheet = sheets.get(selection - 1);
 
-            String effectiveRange
-                    = (sheetRange == null || sheetRange.isBlank())
-                    ? chosenSheet
-                    : chosenSheet + "!" + sheetRange;
-
             GoogleSheetService dataService
-                    = new GoogleSheetService(sheetId, effectiveRange);
+                    = new GoogleSheetService(sheetId, chosenSheet);
 
             String json
                     = dataService.fetchSheetData(accessToken);

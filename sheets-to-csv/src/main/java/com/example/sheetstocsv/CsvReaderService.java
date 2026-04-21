@@ -9,13 +9,6 @@ import java.util.List;
 
 public class CsvReaderService {
 
-    /**
-     * Reads a CSV file and returns rows as List<List<String>>.
-     *
-     * @param csvPath path to CSV file
-     * @return parsed CSV data
-     * @throws IOException if file cannot be read
-     */
     public List<List<String>> readCsv(Path csvPath) throws IOException {
 
         List<List<String>> rows = new ArrayList<>();

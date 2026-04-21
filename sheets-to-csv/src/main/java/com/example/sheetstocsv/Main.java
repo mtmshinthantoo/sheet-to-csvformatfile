@@ -13,6 +13,7 @@ import java.util.Scanner;
 public class Main {
 
     // ------------------ Utility Methods ------------------
+
     private static String generateCsvFileName(String sheetName) {
         String safeSheetName = sheetName.replaceAll("[^a-zA-Z0-9_-]", "_");
         DateTimeFormatter formatter
@@ -31,7 +32,67 @@ public class Main {
                 + "&prompt=consent";
     }
 
+    /**
+     * Ensures a valid access token is available.
+     * Runs OAuth flow on first use, refreshes silently afterward.
+     */
+    private static String ensureAccessToken(Scanner scanner) throws Exception {
+
+        ConfigLoader config = new ConfigLoader();
+
+        String clientId = config.get("google.client.id");
+        String clientSecret = config.get("google.client.secret");
+        String redirectUri = config.get("redirect.uri");
+
+        String refreshToken;
+
+        if (!config.hasValue("google.refresh.token")) {
+            System.out.println("No refresh token found. Running OAuth flow...");
+
+            LocalOAuthCallbackServer callbackServer =
+                    new LocalOAuthCallbackServer(8080);
+            callbackServer.start();
+
+            String oauthUrl = buildOAuthUrl(clientId, redirectUri);
+            System.out.println("Opening browser for Google authorization...");
+
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(URI.create(oauthUrl));
+            } else {
+                System.out.println("Open this URL manually:");
+                System.out.println(oauthUrl);
+            }
+
+            String authorizationCode =
+                    callbackServer.waitForAuthorizationCode();
+            callbackServer.stop();
+
+            if (authorizationCode == null || authorizationCode.isBlank()) {
+                throw new RuntimeException("Failed to obtain authorization code.");
+            }
+
+            OAuthService oauthService =
+                    new OAuthService(clientId, clientSecret, redirectUri);
+
+            TokenResponse tokens =
+                    oauthService.runAuthorization(authorizationCode);
+
+            refreshToken = tokens.getRefreshToken();
+            config.setAndSave("google.refresh.token", refreshToken);
+
+            System.out.println("Authorization successful.");
+        } else {
+            refreshToken = config.get("google.refresh.token");
+        }
+
+        RefreshTokenService refreshService =
+                new RefreshTokenService(clientId, clientSecret);
+
+        return refreshService.refreshAccessToken(refreshToken);
+    }
+
     // ------------------ Main Entry ------------------
+
     public static void main(String[] args) {
 
         Scanner scanner = new Scanner(System.in);
@@ -61,7 +122,8 @@ public class Main {
         }
     }
 
-    // ------------------ IMPORT SUB-MENU ONLY ------------------
+    // ------------------ IMPORT FLOW ------------------
+
     private static void runImportMenu(Scanner scanner) {
 
         while (true) {
@@ -80,93 +142,57 @@ public class Main {
                     break;
 
                 case "2":
-                    System.out.println("\n--- Import CSV -> Append ---");
-
                     try {
-                        // Load config
                         ConfigLoader config = new ConfigLoader();
-
-                        String clientId = config.get("google.client.id");
-                        String clientSecret = config.get("google.client.secret");
+                        String accessToken = ensureAccessToken(scanner);
                         String sheetId = config.get("google.sheet.id");
 
-                        // Ask CSV path
                         System.out.print("Enter CSV file path: ");
                         Path csvPath = Paths.get(scanner.nextLine().trim());
 
-                        if (!Files.exists(csvPath) || !Files.isRegularFile(csvPath)) {
-                            System.out.println("Invalid CSV file path.");
+                        if (!Files.isRegularFile(csvPath)) {
+                            System.out.println("Invalid CSV file.");
                             break;
                         }
 
-                        // Get refresh token
-                        if (!config.hasValue("google.refresh.token")) {
-                            throw new RuntimeException(
-                                    "No refresh token found. Please run export once."
-                            );
-                        }
+                        GoogleSheetService sheetService =
+                                new GoogleSheetService(sheetId, "");
 
-                        String refreshToken = config.get("google.refresh.token");
+                        List<String> sheets =
+                                sheetService.listSheetNames(accessToken);
 
-                        // Refresh access token
-                        RefreshTokenService refreshService
-                                = new RefreshTokenService(clientId, clientSecret);
-
-                        String accessToken
-                                = refreshService.refreshAccessToken(refreshToken);
-
-                        // Create sheet service to list sheets
-                        GoogleSheetService sheetService
-                                = new GoogleSheetService(sheetId, "");
-
-                        List<String> availableSheets
-                                = sheetService.listSheetNames(accessToken);
-
-                        if (availableSheets.isEmpty()) {
-                            System.out.println("No sheets found in spreadsheet.");
-                            break;
-                        }
-
-                        // Show sheets (same UX as Export)
                         System.out.println("\nAvailable sheets:");
-                        for (int i = 0; i < availableSheets.size(); i++) {
-                            System.out.println((i + 1) + ". " + availableSheets.get(i));
+                        for (int i = 0; i < sheets.size(); i++) {
+                            System.out.println((i + 1) + ". " + sheets.get(i));
                         }
 
-                        // User selects target sheet
                         int selection;
                         while (true) {
-                            System.out.print("Select sheet number to append to: ");
+                            System.out.print("Select sheet number: ");
                             if (scanner.hasNextInt()) {
                                 selection = scanner.nextInt();
-                                scanner.nextLine(); // consume newline
-                                if (selection >= 1 && selection <= availableSheets.size()) {
+                                scanner.nextLine();
+                                if (selection >= 1 && selection <= sheets.size()) {
                                     break;
                                 }
                             } else {
                                 scanner.nextLine();
                             }
-                            System.out.println("Invalid selection. Try again.");
+                            System.out.println("Invalid selection.");
                         }
 
-                        String targetSheetName
-                                = availableSheets.get(selection - 1);
+                        String targetSheet = sheets.get(selection - 1);
 
-                        // Create services
-                        CsvReaderService csvReaderService
-                                = new CsvReaderService();
-
-                        ImportService importService
-                                = new ImportService(
-                                        csvReaderService,
+                        ImportService importService =
+                                new ImportService(
+                                        new CsvReaderService(),
                                         sheetService
                                 );
 
-                        // Execute import -> append
                         importService.importAppend(
                                 csvPath,
                                 accessToken,
-                                targetSheetName
+                                targetSheet
                         );
 
                     } catch (Exception e) {
@@ -184,133 +210,69 @@ public class Main {
         }
     }
 
-    // ------------------ EXPORT FLOW (UNCHANGED) ------------------
+    // ------------------ EXPORT FLOW ------------------
+
     private static void runExportFlow(Scanner scanner) {
 
         System.out.println("\n--- Export Google Sheets -> CSV ---");
 
         try {
             ConfigLoader config = new ConfigLoader();
-            String clientId = config.get("google.client.id");
-            String clientSecret = config.get("google.client.secret");
-            String redirectUri = config.get("redirect.uri");
             String sheetId = config.get("google.sheet.id");
-            String configuredSheetName = config.get("google.sheet.name");
             String sheetRange = config.get("google.sheet.range");
 
-            String refreshToken;
+            String accessToken = ensureAccessToken(scanner);
 
-            if (!config.hasValue("google.refresh.token")) {
-                System.out.println("No refresh token found. Running OAuth flow...");
+            GoogleSheetService service =
+                    new GoogleSheetService(sheetId, "");
 
-                LocalOAuthCallbackServer callbackServer
-                        = new LocalOAuthCallbackServer(8080);
-                callbackServer.start();
+            List<String> sheets =
+                    service.listSheetNames(accessToken);
 
-                String oauthUrl = buildOAuthUrl(clientId, redirectUri);
-                System.out.println("Opening browser for Google authorization...");
-
-                if (Desktop.isDesktopSupported()) {
-                    Desktop.getDesktop().browse(URI.create(oauthUrl));
-                } else {
-                    System.out.println("Please open the following URL manually:");
-                    System.out.println(oauthUrl);
-                }
-
-                String authorizationCode
-                        = callbackServer.waitForAuthorizationCode();
-                callbackServer.stop();
-
-                if (authorizationCode == null || authorizationCode.trim().isEmpty()) {
-                    throw new RuntimeException("Failed to obtain authorization code.");
-                }
-
-                OAuthService oauthService
-                        = new OAuthService(clientId, clientSecret, redirectUri);
-
-                TokenResponse tokens
-                        = oauthService.runAuthorization(authorizationCode);
-
-                refreshToken = tokens.getRefreshToken();
-                config.setAndSave("google.refresh.token", refreshToken);
-
-                System.out.println("Authorization successful.");
-            } else {
-                refreshToken = config.get("google.refresh.token");
+            System.out.println("\nAvailable sheets:");
+            for (int i = 0; i < sheets.size(); i++) {
+                System.out.println((i + 1) + ". " + sheets.get(i));
             }
 
-            RefreshTokenService refreshService
-                    = new RefreshTokenService(clientId, clientSecret);
-
-            String accessToken
-                    = refreshService.refreshAccessToken(refreshToken);
-
-            System.out.println("Access token obtained.");
-
-            GoogleSheetService sheetService
-                    = new GoogleSheetService(sheetId, "");
-
-            String chosenSheetName;
-
-            if (configuredSheetName != null && !configuredSheetName.trim().isEmpty()) {
-                chosenSheetName = configuredSheetName;
-                System.out.println("Using sheet from config: " + chosenSheetName);
-            } else {
-                List<String> availableSheets
-                        = sheetService.listSheetNames(accessToken);
-
-                if (availableSheets.isEmpty()) {
-                    throw new RuntimeException("No sheets found in spreadsheet.");
-                }
-
-                System.out.println("\nAvailable sheets:");
-                for (int i = 0; i < availableSheets.size(); i++) {
-                    System.out.println((i + 1) + ". " + availableSheets.get(i));
-                }
-
-                int selection;
-                while (true) {
-                    System.out.print("Select sheet number to export: ");
-                    if (scanner.hasNextInt()) {
-                        selection = scanner.nextInt();
-                        scanner.nextLine();
-                        if (selection >= 1 && selection <= availableSheets.size()) {
-                            break;
-                        }
-                    } else {
-                        scanner.nextLine();
+            int selection;
+            while (true) {
+                System.out.print("Select sheet number to export: ");
+                if (scanner.hasNextInt()) {
+                    selection = scanner.nextInt();
+                    scanner.nextLine();
+                    if (selection >= 1 && selection <= sheets.size()) {
+                        break;
                     }
-                    System.out.println("Invalid selection. Try again.");
+                } else {
+                    scanner.nextLine();
                 }
-
-                chosenSheetName = availableSheets.get(selection - 1);
+                System.out.println("Invalid selection.");
             }
 
-            String effectiveRange;
-            if (sheetRange == null || sheetRange.trim().isEmpty()) {
-                effectiveRange = chosenSheetName;
-            } else if (sheetRange.contains("!")) {
-                effectiveRange = sheetRange;
-            } else {
-                effectiveRange = chosenSheetName + "!" + sheetRange;
-            }
+            String chosenSheet = sheets.get(selection - 1);
 
-            GoogleSheetService dataService
-                    = new GoogleSheetService(sheetId, effectiveRange);
+            String effectiveRange =
+                    sheetRange == null || sheetRange.isBlank()
+                            ? chosenSheet
+                            : chosenSheet + "!" + sheetRange;
 
-            String sheetJson
-                    = dataService.fetchSheetData(accessToken);
+            GoogleSheetService dataService =
+                    new GoogleSheetService(sheetId, effectiveRange);
 
-            CsvWriterService csvWriter = new CsvWriterService();
-            String outputFileName = generateCsvFileName(chosenSheetName);
+            String sheetJson =
+                    dataService.fetchSheetData(accessToken);
+
+            CsvWriterService writer = new CsvWriterService();
 
             Path exportDir = Paths.get("Exported_CSV");
             Files.createDirectories(exportDir);
 
-            Path outputPath = exportDir.resolve(outputFileName);
-            csvWriter.writeCsv(sheetJson, outputPath);
+            Path output =
+                    exportDir.resolve(generateCsvFileName(chosenSheet));
 
-            System.out.println("CSV exported to: " + outputPath);
+            writer.writeCsv(sheetJson, output);
+
+            System.out.println("CSV exported to: " + output);
 
         } catch (Exception e) {
             System.err.println("Export failed:");

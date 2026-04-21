@@ -49,7 +49,7 @@ public class Main {
         return url.substring(start, end);
     }
 
-    private static void askForSheetUrlOnce(Scanner scanner) {
+    private static void askForSheetUrl(Scanner scanner) {
         while (true) {
             System.out.print("Enter Google Sheets URL: ");
             String url = scanner.nextLine().trim();
@@ -115,13 +115,14 @@ public class Main {
 
         Scanner scanner = new Scanner(System.in);
 
-        // ASK ONCE AT STARTUP
-        askForSheetUrlOnce(scanner);
+        // Ask once at startup
+        askForSheetUrl(scanner);
 
         while (true) {
             System.out.println("\n========= MAIN MENU =========");
             System.out.println("1. Export Google Sheets -> CSV");
             System.out.println("2. Import CSV -> Google Sheets");
+            System.out.println("3. Change Google Spreadsheet");
             System.out.println("0. Exit");
             System.out.print("Choose an option: ");
 
@@ -134,8 +135,11 @@ public class Main {
                 case "2":
                     runImportMenu(scanner);
                     break;
+                case "3":
+                    askForSheetUrl(scanner);
+                    break;
                 case "0":
-                    System.out.println("Exiting application.");
+                    System.out.println("Exiting application. Goodbye!");
                     return;
                 default:
                     System.out.println("Invalid option.");
@@ -181,46 +185,54 @@ public class Main {
                             break;
                         }
 
-                        System.out.println("\nAvailable sheets:");
-                        for (int i = 0; i < sheets.size(); i++) {
-                            System.out.println((i + 1) + ". " + sheets.get(i));
-                        }
-
-                        int selection;
                         while (true) {
-                            System.out.print("Select sheet number: ");
-                            if (scanner.hasNextInt()) {
-                                selection = scanner.nextInt();
-                                scanner.nextLine();
-                                if (selection >= 1 && selection <= sheets.size()) {
-                                    break;
-                                }
-                            } else {
-                                scanner.nextLine();
+                            System.out.println("\nAvailable sheets:");
+                            for (int i = 0; i < sheets.size(); i++) {
+                                System.out.println((i + 1) + ". " + sheets.get(i));
                             }
-                            System.out.println("Invalid selection.");
-                        }
+                            System.out.println("0. Back");
+                            System.out.print("Select sheet number: ");
 
-                        String targetSheet = sheets.get(selection - 1);
+                            if (!scanner.hasNextInt()) {
+                                scanner.nextLine();
+                                System.out.println("Invalid input.");
+                                continue;
+                            }
 
-                        ImportService importService
-                                = new ImportService(
-                                        new CsvReaderService(),
-                                        sheetService
+                            int selection = scanner.nextInt();
+                            scanner.nextLine();
+
+                            if (selection == 0) {
+                                break;
+                            }
+
+                            if (selection < 1 || selection > sheets.size()) {
+                                System.out.println("Invalid selection.");
+                                continue;
+                            }
+
+                            String targetSheet = sheets.get(selection - 1);
+
+                            ImportService importService
+                                    = new ImportService(
+                                            new CsvReaderService(),
+                                            sheetService
+                                    );
+
+                            if (choice.equals("1")) {
+                                importService.importUpdate(
+                                        csvPath,
+                                        accessToken,
+                                        targetSheet
                                 );
-
-                        if (choice.equals("1")) {
-                            importService.importUpdate(
-                                    csvPath,
-                                    accessToken,
-                                    targetSheet
-                            );
-                        } else {
-                            importService.importAppend(
-                                    csvPath,
-                                    accessToken,
-                                    targetSheet
-                            );
+                            } else {
+                                importService.importAppend(
+                                        csvPath,
+                                        accessToken,
+                                        targetSheet
+                                );
+                            }
+                            break;
                         }
 
                     } catch (Exception e) {
@@ -256,45 +268,53 @@ public class Main {
                 throw new RuntimeException("No sheets found.");
             }
 
-            System.out.println("\nAvailable sheets:");
-            for (int i = 0; i < sheets.size(); i++) {
-                System.out.println((i + 1) + ". " + sheets.get(i));
-            }
-
-            int selection;
             while (true) {
-                System.out.print("Select sheet number to export: ");
-                if (scanner.hasNextInt()) {
-                    selection = scanner.nextInt();
-                    scanner.nextLine();
-                    if (selection >= 1 && selection <= sheets.size()) {
-                        break;
-                    }
-                } else {
-                    scanner.nextLine();
+                System.out.println("\nAvailable sheets:");
+                for (int i = 0; i < sheets.size(); i++) {
+                    System.out.println((i + 1) + ". " + sheets.get(i));
                 }
-                System.out.println("Invalid selection.");
+                System.out.println("0. Back");
+                System.out.print("Select sheet number to export: ");
+
+                if (!scanner.hasNextInt()) {
+                    scanner.nextLine();
+                    System.out.println("Invalid input.");
+                    continue;
+                }
+
+                int selection = scanner.nextInt();
+                scanner.nextLine();
+
+                if (selection == 0) {
+                    return;
+                }
+
+                if (selection < 1 || selection > sheets.size()) {
+                    System.out.println("Invalid selection.");
+                    continue;
+                }
+
+                String chosenSheet = sheets.get(selection - 1);
+
+                GoogleSheetService dataService
+                        = new GoogleSheetService(SHEET_ID, chosenSheet);
+
+                String json
+                        = dataService.fetchSheetData(accessToken);
+
+                CsvWriterService writer = new CsvWriterService();
+
+                Path exportDir = Paths.get("Exported_CSV");
+                Files.createDirectories(exportDir);
+
+                Path output
+                        = exportDir.resolve(generateCsvFileName(chosenSheet));
+
+                writer.writeCsv(json, output);
+
+                System.out.println("CSV exported to: " + output);
+                return;
             }
-
-            String chosenSheet = sheets.get(selection - 1);
-
-            GoogleSheetService dataService
-                    = new GoogleSheetService(SHEET_ID, chosenSheet);
-
-            String json
-                    = dataService.fetchSheetData(accessToken);
-
-            CsvWriterService writer = new CsvWriterService();
-
-            Path exportDir = Paths.get("Exported_CSV");
-            Files.createDirectories(exportDir);
-
-            Path output
-                    = exportDir.resolve(generateCsvFileName(chosenSheet));
-
-            writer.writeCsv(json, output);
-
-            System.out.println("CSV exported to: " + output);
 
         } catch (Exception e) {
             System.err.println("Export failed:");
